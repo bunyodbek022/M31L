@@ -1,14 +1,28 @@
-import jwt from "jsonwebtoken";
-const secret = "qwer12345";
+import jwt from 'jsonwebtoken';
 
-const payload = {
-    id: 12,
-    name: "Umar",
-    role: "Teacher",
-    staffId: 1233434
+// CREATE TOKEN
+export const generateToken = (payload, secret, expiresIn) => {
+  try {
+    console.log({
+      payload,
+      secret,
+      expiresIn,
+    });
+
+    const token = jwt.sign(payload, secret, { expiresIn });
+    return token;
+  } catch (error) {
+    throw new Error(error);
+  }
 };
-const experesIn = {experesIn: '2s'}
 
-const token = jwt.sign(payload, secret, experesIn);
+// CHECK TOKEN
+export const verifyToken = (token, secret) => {
+  try {
+    const decoded = jwt.verify(token, secret);
 
-console.log(token)
+    return decoded;
+  } catch (error) {
+    throw new Error(error);
+  }
+};

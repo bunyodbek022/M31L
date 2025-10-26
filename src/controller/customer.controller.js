@@ -1,4 +1,4 @@
-import Customer from "../model/customersModel.js";
+import Customer from '../model/customersModel.js';
 export const getCustomers = async (req, res, next) => {
   try {
     const customer = await Customer.find();
@@ -34,7 +34,7 @@ export const updateCustomer = async (req, res, next) => {
     const updatedData = req.body;
     const customer = await Customer.updateOne({ id }, updatedData);
     if (!customer) {
-      return res.status(404).send("customer is not found!");
+      return res.status(404).send('customer is not found!');
     }
     res.send({ message: customer });
   } catch (err) {
@@ -47,7 +47,7 @@ export const deleteCustomer = async (req, res, next) => {
     const { id } = req.params;
     const customer = await Customer.deleteOne(id);
     if (customer.deletedCount === 0) {
-      return res.status(404).json({ message: "customer is not found" });
+      return res.status(404).json({ message: 'customer is not found' });
     }
     res.send({ message: customer });
   } catch (err) {
