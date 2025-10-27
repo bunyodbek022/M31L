@@ -1,103 +1,91 @@
-import { Customer } from '../model/customersModel.js';
-import { config } from '../config/index.js';
-import { verifyToken, generateToken } from '../helper/jwt.js';
+import Customer from '../model/customersModel.js';
+import {
+  verifyToken,
+  generateAccessToken,
+  generateRefreshToken,
+} from '../helper/jwt.js';
+import { ApiError } from '../middleware/apiError.js';
 
 export const authController = {
   signup: async (req, res, next) => {
     try {
-      const customer = req.validated;
-
-      const customerExist = await customer.find({ email: customer.email });
-      if (customerExist.length !== 0) {
-        res.status(403).send({
-          message: `# ${Customer.email} already exist`,
-        });
-        return;
-      }
-      const newcustomer = await Customer.create(customer);
-      res.send(newcustomer);
-    } catch (error) {
-      next(error);
-    }
-  },
-  signin: async (req, res, next) => {
-    try {
-      const customer = req.validated;
-
-      const customerData = await Customer.findOne({ email: customer.email });
-
-      if (customerData.length === 0) {
-        res.status(404).send({
-          message: `# ${customer.email} not found`,
-        });
-        return;
+      const { name, phone, password, email } = req.body;
+      const customerExist = await Customer.findOne({ email });
+      if (customerExist) {
+        return next(new ApiError(403, "Email oldin ro'yxatdan o'tgan"));
       }
 
-      const isValidPassword = await customerData.compasePassword(
-        customer.password,
-      );
+      const newCustomer = await Customer.create({
+        name,
+        phone,
+        email,
+        password,
+      });
 
-      if (!isValidPassword) {
-        res.status(400).send({
-          message: 'customer email or password is not valid',
-        });
-        return;
-      }
+      const accessToken = generateAccessToken(newCustomer);
+      const refreshToken = generateRefreshToken(newCustomer);
 
-      const accessPayload = {
-        id: customerData._id,
-        email: customerData.email,
-      };
-      const accessToken = await generateToken(
-        accessPayload,
-        config.jwt.accessSecret,
-        '1h',
-      );
-
-      const refreshPaylod = {
-        id: customerData._id,
-        name: customerData.name,
-      };
-      const refreshToken = await generateToken(
-        refreshPaylod,
-        config.jwt.refreshSecret,
-        '30d',
-      );
-
-      res.status(200).send({
+      res.status(201).json({
+        success: true,
+        message: "Muvaffaqiyatli ro'yxatdan o'tdingiz",
         accessToken,
         refreshToken,
       });
     } catch (error) {
-      console.log(error);
-
       next(error);
     }
   },
-  profile: (req, res, next) => {
+
+  signin: async (req, res, next) => {
     try {
-      const customer = req.customer;
-      res.send(customer);
+      const { email, password } = req.body;
+
+      const customerData = await Customer.findOne({ email });
+      if (!customerData) return next(new ApiError(404, 'User topilmadi'));
+
+      const isValidPassword = await customerData.comparePassword(password);
+      if (!isValidPassword)
+        return next(new ApiError(401, "Email yoki parol noto'g'ri"));
+
+      const accessToken = generateAccessToken(customerData);
+      const refreshToken = generateRefreshToken(customerData);
+
+      res.status(200).json({
+        success: true,
+        accessToken,
+        refreshToken,
+      });
     } catch (error) {
       next(error);
     }
   },
+
+  profile: async (req, res, next) => {
+    try {
+      const customer = await Customer.findById(req.user).select('-password');
+      if (!customer) return next(new ApiError(404, 'User topilmadi'));
+
+      res.json(customer);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   updateAccess: async (req, res, next) => {
     try {
-      const data = req.body;
-      const refreshToken = data.refreshToken;
+      const { refreshToken } = req.body;
+      if (!refreshToken) return next(new ApiError(401, "Refresh token yo'q"));
 
-      const verifed = await verifyToken(refreshToken, config.jwt.refreshSecret);
-      const customer = await customer.findById(verifed.id);
-      const payload = {
-        id: customer._id,
-        email: customer.email,
-        name: customer.name,
-      };
-      const accessToken = generateToken(payload, config.jwt.accessSecret, '1h');
-      res.status(200).send({
+      const decoded = verifyToken(refreshToken, process.env.JWT_REFRESH_SECRET);
+      const customer = await Customer.findById(decoded.id);
+      if (!customer) return next(new ApiError(404, 'User topilmadi'));
+
+      const accessToken = generateAccessToken(customer);
+
+      res.status(200).json({
+        success: true,
         accessToken,
-        refreshToken,
+        refreshToken, // eski refresh token qaytadi ✅
       });
     } catch (error) {
       next(error);
