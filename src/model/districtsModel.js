@@ -1,5 +1,8 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
+
 const districtSchema = new mongoose.Schema({
   name: { type: String, required: true },
 });
-export default mongoose.model("District", districtSchema);
+
+export default mongoose.models.District ||
+  mongoose.model('District', districtSchema);

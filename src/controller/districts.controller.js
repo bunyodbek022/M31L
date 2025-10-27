@@ -1,4 +1,4 @@
-import District from "../model/districtsModel.js";
+import District from '../model/districtsModel.js';
 export const getDistricts = async (req, res, next) => {
   try {
     const district = await District.find();
@@ -32,11 +32,19 @@ export const updateDistrict = async (req, res, next) => {
   try {
     const { id } = req.params;
     const updatedData = req.body;
-    const district = await District.updateOne({ id }, updatedData);
+    const district = await District.findByIdAndUpdate(id, updatedData, {
+      new: true,
+    });
+
     if (!district) {
-      return res.status(404).send("District is not found!");
+      return res.status(404).json({ message: 'District topilmadi!' });
     }
-    res.send({ message: district });
+
+    res.json({
+      success: true,
+      message: 'Yangilandi',
+      district,
+    });
   } catch (err) {
     console.log(err);
     next(err);
@@ -47,7 +55,7 @@ export const deleteDistrict = async (req, res, next) => {
     const { id } = req.params;
     const district = await District.deleteOne(id);
     if (district.deletedCount === 0) {
-      return res.status(404).json({ message: "District is not found" });
+      return res.status(404).json({ message: 'District is not found' });
     }
     res.send({ message: district });
   } catch (err) {

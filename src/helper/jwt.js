@@ -1,28 +1,59 @@
+/* eslint-disable no-unused-vars */
 import jwt from 'jsonwebtoken';
+import { ApiError } from '../middleware/apiError.js';
 
-// CREATE TOKEN
-export const generateToken = (payload, secret, expiresIn) => {
+// CREATE ACCESS TOKEN
+export const generateAccessToken = (user) => {
+  return jwt.sign({ id: user._id }, process.env.JWT_ACCESS_SECRET, {
+    expiresIn: process.env.JWT_ACCESS_EXPIRES,
+  });
+};
+
+// CREATE REFRESH TOKEN
+export const generateRefreshToken = (user) => {
+  return jwt.sign({ id: user._id }, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: process.env.JWT_REFRESH_EXPIRES,
+  });
+};
+
+// VERIFY TOKEN
+export const verifyToken = (token, secret) => {
   try {
-    console.log({
-      payload,
-      secret,
-      expiresIn,
-    });
-
-    const token = jwt.sign(payload, secret, { expiresIn });
-    return token;
-  } catch (error) {
-    throw new Error(error);
+    return jwt.verify(token, secret);
+  } catch (err) {
+    throw new ApiError(401, 'Token yaroqsiz yoki muddati tugagan');
   }
 };
 
-// CHECK TOKEN
-export const verifyToken = (token, secret) => {
-  try {
-    const decoded = jwt.verify(token, secret);
+// PROTECT MIDDLEWARE
+export const protect = (req, res, next) => {
+  const authHeader = req.headers.authorization;
 
-    return decoded;
-  } catch (error) {
-    throw new Error(error);
+  if (!authHeader?.startsWith('Bearer ')) {
+    return next(new ApiError(401, 'Token mavjud emas'));
   }
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decoded = verifyToken(token, process.env.JWT_ACCESS_SECRET);
+    req.user = decoded.id;
+    next();
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const adminOnly = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return next(new ApiError(403, 'Admin uchun ruxsat berilgan'));
+  }
+  next();
+};
+
+export const deliveryStaffOnly = (req, res, next) => {
+  if (req.user.role !== 'delivery_staff') {
+    return next(new ApiError(403, 'Foydalanuvchi Delivery Staff emas!'));
+  }
+  next();
 };
