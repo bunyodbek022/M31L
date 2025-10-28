@@ -7,12 +7,12 @@ import { order_itemsRouter } from './order_items.router.js';
 import { orderRouter } from './orders.router.js';
 import { water_productRouter } from './water_products.router.js';
 import { paymentRouter } from './payments.router.js';
-import { customerRouter } from './customer.router.js';
+import { userRouter } from './user.router.js';
 
 const router = Router();
 
 router.use('/auth', authRouter);
-router.use('/customer', customerRouter);
+router.use('/user', userRouter);
 router.use('/address', addressRouter);
 router.use('/delivery_staff', delivery_staffRouter);
 router.use('/district', districtRouter);

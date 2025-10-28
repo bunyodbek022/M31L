@@ -6,12 +6,18 @@ import {
   deleteDistrict,
   addDistrict,
 } from '../controller/districts.controller.js';
-import { adminOnly, protect } from '../helper/jwt.js';
+import { authGuard, roleGuard } from '../middleware/guard.middleware.js';
 const router = Router();
-router.get('/', protect, adminOnly, getDistricts);
-router.get('/:id', protect, getOneDistrict);
-router.post('/', protect, adminOnly, addDistrict);
-router.put('/:id', protect, adminOnly, updateDistrict);
-router.delete('/:id', protect, adminOnly, deleteDistrict);
+
+router.use(authGuard);
+router.get('/', roleGuard('amdin, deliveryStaff, customer'), getDistricts);
+router.get('/:id', roleGuard('amdin, deliveryStaff, customer'), getOneDistrict);
+router.post('/', roleGuard('amdin, deliveryStaff, customer'), addDistrict);
+router.put('/:id', roleGuard('amdin, deliveryStaff, customer'), updateDistrict);
+router.delete(
+  '/:id',
+  roleGuard('amdin, deliveryStaff, customer'),
+  deleteDistrict,
+);
 
 export { router as districtRouter };

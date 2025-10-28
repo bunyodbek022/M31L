@@ -6,14 +6,14 @@ import {
   deletePayment,
   addPayment,
 } from '../controller/payments.controller.js';
-import { adminOnly, protect } from '../helper/jwt.js';
+import { authGuard } from '../middleware/guard.middleware.js';
 const router = Router();
 
-router.use(protect);
-router.get('/', protect, adminOnly, getPayments);
-router.get('/:id', protect, getOnePayment);
-router.post('/', protect, adminOnly, addPayment);
-router.put('/:id', protect, adminOnly, updatePayment);
-router.delete('/:id', protect, adminOnly, deletePayment);
+router.use(authGuard);
+router.get('/', getPayments);
+router.get('/:id', getOnePayment);
+router.post('/', addPayment);
+router.put('/:id', updatePayment);
+router.delete('/:id', deletePayment);
 
 export { router as paymentRouter };
