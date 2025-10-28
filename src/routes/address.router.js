@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { adminOnly, protect } from '../helper/jwt.js';
 import {
   getAddress,
   getOneAddress,
@@ -7,12 +6,18 @@ import {
   deleteAddress,
   addAddress,
 } from '../controller/address.controller.js';
+import { authGuard, roleGuard } from '../middleware/guard.middleware.js';
 const router = Router();
 
-router.get('/', protect, adminOnly, getAddress);
-router.get('/:id', protect, getOneAddress);
-router.post('/', protect, adminOnly, addAddress);
-router.put('/:id', protect, adminOnly, updateAddress);
-router.delete('/:id', protect, adminOnly, deleteAddress);
+router.get('/', authGuard, roleGuard('admin'), getAddress);
+router.get(
+  '/:id',
+  authGuard,
+  roleGuard('admin', 'customer', 'deliveryStaff'),
+  getOneAddress,
+);
+router.post('/', authGuard, roleGuard('admin', 'customer'), addAddress);
+router.put('/:id', authGuard, roleGuard('admin', 'customer'), updateAddress);
+router.delete('/:id', authGuard, roleGuard('admin', 'customer'), deleteAddress);
 
 export { router as addressRouter };

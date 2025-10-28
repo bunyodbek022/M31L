@@ -6,14 +6,14 @@ import {
   deleteWater_product,
   addWater_product,
 } from '../controller/water_products.controller.js';
-import { adminOnly, protect } from '../helper/jwt.js';
+import { authGuard } from '../middleware/guard.middleware.js';
 const router = Router();
 
-router.use(protect);
-router.get('/', protect, adminOnly, getWater_products);
-router.get('/:id', protect, getOneWater_product);
-router.post('/', protect, adminOnly, addWater_product);
-router.put('/:id', protect, adminOnly, updateWater_product);
-router.delete('/:id', protect, adminOnly, deleteWater_product);
+router.use(authGuard);
+router.get('/', getWater_products);
+router.get('/:id', getOneWater_product);
+router.post('/', addWater_product);
+router.put('/:id', updateWater_product);
+router.delete('/:id', deleteWater_product);
 
 export { router as water_productRouter };
