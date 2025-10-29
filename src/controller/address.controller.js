@@ -1,6 +1,6 @@
 import Address from '../model/addressModel.js';
 
-export const getAddress = async (req, res, next) => {
+export const getAllress = async (req, res, next) => {
   try {
     const address = await Address.find();
     res.status(200).json(address);

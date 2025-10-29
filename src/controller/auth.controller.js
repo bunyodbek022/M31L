@@ -1,4 +1,5 @@
-import Customer from '../model/users.model.js';
+/* eslint-disable no-unused-vars */
+import User from '../model/users.model.js';
 import {
   verifyToken,
   generateAccessToken,
@@ -9,21 +10,22 @@ import { ApiError } from '../middleware/apiError.js';
 export const authController = {
   signup: async (req, res, next) => {
     try {
-      const { name, phone, password, email } = req.body;
-      const customerExist = await Customer.findOne({ email });
-      if (customerExist) {
+      const { name, phone, password, email, role } = req.body;
+      const userExist = await User.findOne({ email });
+      if (userExist) {
         return next(new ApiError(403, "Email oldin ro'yxatdan o'tgan"));
       }
 
-      const newCustomer = await Customer.create({
+      const newUser = await User.create({
         name,
         phone,
         email,
         password,
+        role,
       });
 
-      const accessToken = generateAccessToken(newCustomer);
-      const refreshToken = generateRefreshToken(newCustomer);
+      const accessToken = generateAccessToken(newUser);
+      const refreshToken = generateRefreshToken(newUser);
 
       res.status(201).json({
         success: true,
@@ -40,15 +42,15 @@ export const authController = {
     try {
       const { email, password } = req.body;
 
-      const customerData = await Customer.findOne({ email });
-      if (!customerData) return next(new ApiError(404, 'User topilmadi'));
+      const userData = await User.findOne({ email });
+      if (!userData) return next(new ApiError(404, 'User topilmadi'));
 
-      const isValidPassword = await customerData.comparePassword(password);
+      const isValidPassword = await userData.comparePassword(password);
       if (!isValidPassword)
         return next(new ApiError(401, "Email yoki parol noto'g'ri"));
 
-      const accessToken = generateAccessToken(customerData);
-      const refreshToken = generateRefreshToken(customerData);
+      const accessToken = generateAccessToken(userData);
+      const refreshToken = generateRefreshToken(userData);
 
       res.status(200).json({
         success: true,
@@ -62,33 +64,42 @@ export const authController = {
 
   profile: async (req, res, next) => {
     try {
-      const customer = await Customer.findById(req.user).select('-password');
-      if (!customer) return next(new ApiError(404, 'User topilmadi'));
+      const user = await User.findById(req.user).select('-password');
+      if (!user) return next(new ApiError(404, 'User topilmadi'));
 
-      res.json(customer);
+      res.json(User);
     } catch (error) {
       next(error);
     }
   },
 
+  // REFRESH
   updateAccess: async (req, res, next) => {
     try {
-      const { refreshToken } = req.body;
-      if (!refreshToken) return next(new ApiError(401, "Refresh token yo'q"));
+      const authHeader = req.headers.authorization;
 
-      const decoded = verifyToken(refreshToken, process.env.JWT_REFRESH_SECRET);
-      const customer = await Customer.findById(decoded.id);
-      if (!customer) return next(new ApiError(404, 'User topilmadi'));
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return next(new ApiError(401, "Refresh token yo'q"));
+      }
 
-      const accessToken = generateAccessToken(customer);
+      const refreshToken = authHeader.split(' ')[1];
+      const decoded = await verifyToken(
+        refreshToken,
+        process.env.JWT_REFRESH_SECRET,
+      );
+
+      const user = await User.findById(decoded.id);
+      if (!user) return next(new ApiError(404, 'User topilmadi'));
+
+      const accessToken = generateAccessToken(user);
 
       res.status(200).json({
         success: true,
         accessToken,
-        refreshToken, // eski refresh token qaytadi ✅
+        refreshToken,
       });
     } catch (error) {
-      next(error);
+      next(new ApiError(401, 'Yaroqsiz yoki muddati tugagan refresh token'));
     }
   },
 };

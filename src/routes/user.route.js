@@ -8,14 +8,23 @@ import {
 import { authGuard, roleGuard } from '../middleware/guard.middleware.js';
 
 const router = Router();
-router.get('/', roleGuard('customer', 'deliveryStaff', 'admin'), getUsers);
+
+router.get(
+  '/',
+  authGuard,
+  roleGuard('customer', 'deliveryStaff', 'admin'),
+  getUsers,
+);
+
 router.get(
   '/:id',
   authGuard,
-  roleGuard('User', 'deliveryStaff', 'admin'),
+  roleGuard('customer', 'deliveryStaff', 'admin'),
   getOneUser,
 );
-router.put('/:id', updateUser);
-router.delete('/:id', deleteUser);
+
+router.put('/:id', authGuard, roleGuard('admin', 'customer'), updateUser);
+
+router.delete('/:id', authGuard, roleGuard('admin'), deleteUser);
 
 export { router as userRouter };
