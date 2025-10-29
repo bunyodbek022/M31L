@@ -1,13 +1,13 @@
 import { Router } from 'express';
-import { authRouter } from './auth.router.js';
-import { addressRouter } from './address.router.js';
-import { delivery_staffRouter } from './delivery_staff.router.js';
-import { districtRouter } from './districts.router.js';
-import { order_itemsRouter } from './order_items.router.js';
-import { orderRouter } from './orders.router.js';
-import { water_productRouter } from './water_products.router.js';
-import { paymentRouter } from './payments.router.js';
-import { userRouter } from './user.router.js';
+import { authRouter } from './auth.route.js';
+import { addressRouter } from './address.route.js';
+import { delivery_staffRouter } from './delivery_staff.route.js';
+import { districtRouter } from './districts.route.js';
+import { order_itemsRouter } from './order_items.route.js';
+import { orderRouter } from './orders.route.js';
+import { water_productRouter } from './water_products.route.js';
+import { paymentRouter } from './payments.route.js';
+import { userRouter } from './user.route.js';
 
 const router = Router();
 

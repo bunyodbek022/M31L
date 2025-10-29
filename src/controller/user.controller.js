@@ -24,19 +24,6 @@ export const getOneUser = async (req, res, next) => {
   }
 };
 
-export const addUser = async (req, res, next) => {
-  try {
-    const user = await User.create(req.body);
-    res.status(201).json({
-      success: true,
-      message: 'User created successfully!',
-      data: user,
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
 export const updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
