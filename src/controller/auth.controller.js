@@ -67,7 +67,7 @@ export const authController = {
       const user = await User.findById(req.user).select('-password');
       if (!user) return next(new ApiError(404, 'User topilmadi'));
 
-      res.json(User);
+      res.json(user);
     } catch (error) {
       next(error);
     }

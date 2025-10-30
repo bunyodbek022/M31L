@@ -11,6 +11,11 @@ import {
   roleGuard,
   selfGuard,
 } from '../middleware/guard.middleware.js';
+import {
+  addressValidate,
+  addressUpdate,
+} from '../validation/address.validation.js';
+import { validate } from '../validation/validation.js';
 const router = Router();
 
 //GET All address
@@ -21,8 +26,20 @@ router.get(
   roleGuard('admin', 'customer', 'deliveryStaff'),
   getOneAddress,
 );
-router.post('/', authGuard, selfGuard, addAddress);
-router.put('/:id', authGuard, selfGuard, updateAddress);
+router.post(
+  '/',
+  authGuard,
+  selfGuard,
+  validate(addressValidate, 'body'),
+  addAddress,
+);
+router.put(
+  '/:id',
+  authGuard,
+  selfGuard,
+  validate(addressUpdate, 'body'),
+  updateAddress,
+);
 router.delete('/:id', authGuard, selfGuard, deleteAddress);
 
 export { router as addressRouter };
