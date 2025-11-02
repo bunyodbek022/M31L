@@ -6,7 +6,10 @@ import {
   roleGuard,
 } from '../middleware/guard.middleware.js';
 import { validate } from '../validation/validation.js';
-import { customerValidate } from '../validation/user.validation.js';
+import {
+  customerValidate,
+  loginValidate,
+} from '../validation/user.validation.js';
 const router = Router();
 
 router.get(
@@ -15,7 +18,7 @@ router.get(
   roleGuard('admin', 'deliveryStaff', 'customer'),
   authController.profile,
 );
-router.post('/signin', authController.signin);
+router.post('/signin', validate(loginValidate, 'body'), authController.signin);
 router.post(
   '/signup',
   validate(customerValidate, 'body'),

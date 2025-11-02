@@ -1,5 +1,9 @@
 import User from '../model/users.model.js';
-
+import {
+  customerUpdate,
+  adminUpdateUserValidate,
+} from '../validation/user.validation.js';
+import { ApiError } from '../middleware/apiError.js';
 export const getUsers = async (req, res, next) => {
   try {
     const users = await User.find();
@@ -27,23 +31,35 @@ export const getOneUser = async (req, res, next) => {
 export const updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const schema =
+      req.user.role === 'admin' ? adminUpdateUserValidate : customerUpdate;
 
-    const user = await User.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const validatedData = schema.parse(req.body);
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found!' });
+    if (req.user.role !== 'admin' && req.user._id.toString() !== id) {
+      throw next(
+        new ApiError(
+          403,
+          'Siz faqat ozingizning profilingizni ozgartira olasiz',
+        ),
+      );
     }
 
-    res.status(200).json({
-      success: true,
-      message: 'User updated successfully!',
-      data: user,
+    const updatedUser = await User.findByIdAndUpdate(id, validatedData, {
+      new: true,
     });
-  } catch (err) {
-    next(err);
+
+    if (!updatedUser) {
+      throw new ApiError(404, 'Foydalanuvchi topilmadi');
+    }
+
+    res.json({
+      success: true,
+      message: 'Foydalanuvchi muvaffaqiyatli yangilandi',
+      data: updatedUser,
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
