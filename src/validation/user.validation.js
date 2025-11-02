@@ -43,3 +43,7 @@ export const customerUpdate = z.object({
     .max(30, `TOO LONG FOR A PASSWORD`)
     .optional(),
 });
+
+export const adminUpdateUserValidate = customerUpdate.extend({
+  role: z.enum(['customer', 'deliveryStaff', 'admin']).optional(),
+});

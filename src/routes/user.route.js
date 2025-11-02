@@ -1,30 +1,27 @@
 import { Router } from 'express';
+import { getUsers, updateUser } from '../controller/user.controller.js';
+import { authGuard } from '../middleware/guard.middleware.js';
+import { validate } from '../validation/validation.js';
 import {
-  getUsers,
-  getOneUser,
-  updateUser,
-  deleteUser,
-} from '../controller/user.controller.js';
-import { authGuard, roleGuard } from '../middleware/guard.middleware.js';
+  customerUpdate,
+  adminUpdateUserValidate,
+} from '../validation/user.validation.js';
 
 const router = Router();
 
-router.get(
-  '/',
-  authGuard,
-  roleGuard('customer', 'deliveryStaff', 'admin'),
-  getUsers,
-);
+router.get('/', getUsers);
 
-router.get(
+router.put(
   '/:id',
   authGuard,
-  roleGuard('customer', 'deliveryStaff', 'admin'),
-  getOneUser,
+  (req, res, next) => {
+    if (req.user.role === 'admin') {
+      return validate(adminUpdateUserValidate)(req, res, next);
+    } else {
+      return validate(customerUpdate)(req, res, next);
+    }
+  },
+  updateUser,
 );
-
-router.put('/:id', authGuard, roleGuard('admin', 'customer'), updateUser);
-
-router.delete('/:id', authGuard, roleGuard('admin'), deleteUser);
 
 export { router as userRouter };
