@@ -1,19 +1,25 @@
 import { Router } from 'express';
-import {
-  getPayments,
-  getOnePayment,
-  updatePayment,
-  deletePayment,
-  addPayment,
-} from '../controller/payments.controller.js';
+import { PaymentController } from '../controller/payments.controller.js';
 import { authGuard } from '../middleware/guard.middleware.js';
+
 const router = Router();
 
+//  Barcha endpointlar uchun authGuard
 router.use(authGuard);
-router.get('/', getPayments);
-router.get('/:id', getOnePayment);
-router.post('/', addPayment);
-router.put('/:id', updatePayment);
-router.delete('/:id', deletePayment);
+
+//  GET all payments
+router.get('/', PaymentController.getAll);
+
+//  GET one payment
+router.get('/:id', PaymentController.getOne);
+
+//  CREATE payment
+router.post('/', PaymentController.add);
+
+//  UPDATE payment
+router.put('/:id', PaymentController.update);
+
+//  DELETE payment
+router.delete('/:id', PaymentController.delete);
 
 export { router as paymentRouter };

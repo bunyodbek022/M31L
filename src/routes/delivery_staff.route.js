@@ -1,26 +1,38 @@
 import { Router } from 'express';
-import {
-  getDelivery_staffs,
-  getOneDelivery_staff,
-  updateDelivery_staff,
-  deleteDelivery_staff,
-} from '../controller/delivery_staff.controller.js';
+import { DeliveryStaffController } from '../controller/delivery_staff.controller.js';
 import { authGuard, roleGuard } from '../middleware/guard.middleware.js';
 
 const router = Router();
+
+//  Barcha endpointlar uchun authGuard
 router.use(authGuard);
+
+//  GET all delivery staff
 router.get(
   '/',
-  roleGuard('customer', 'admin', 'deliverStaff'),
-  getDelivery_staffs,
-);
-router.put('/:id', roleGuard('admin', 'deliverStaff'), updateDelivery_staff);
-router.delete(
-  '/:id',
-  roleGuard('amdin', 'deliveryStaff'),
-  deleteDelivery_staff,
+  roleGuard('customer', 'admin', 'deliveryStaff'),
+  DeliveryStaffController.getAll,
 );
 
-router.get('/profile/:id', getOneDelivery_staff);
+//  GET one delivery staff (profile)
+router.get(
+  '/profile/:id',
+  roleGuard('customer', 'admin', 'deliveryStaff'),
+  DeliveryStaffController.getOne,
+);
+
+//  UPDATE delivery staff
+router.put(
+  '/:id',
+  roleGuard('admin', 'deliveryStaff'),
+  DeliveryStaffController.update,
+);
+
+//  DELETE delivery staff
+router.delete(
+  '/:id',
+  roleGuard('admin', 'deliveryStaff'),
+  DeliveryStaffController.delete,
+);
 
 export { router as delivery_staffRouter };
