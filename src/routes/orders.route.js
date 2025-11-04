@@ -1,19 +1,25 @@
 import { Router } from 'express';
-import {
-  getOrders,
-  getOneOrder,
-  updateOrder,
-  deleteOrder,
-  addOrder,
-} from '../controller/orders.controller.js';
+import { OrderController } from '../controller/orders.controller.js';
 import { authGuard } from '../middleware/guard.middleware.js';
+
 const router = Router();
 
+//  Barcha endpointlar uchun authGuard
 router.use(authGuard);
-router.get('/', getOrders);
-router.get('/:id', getOneOrder);
-router.post('/', addOrder);
-router.put('/:id', updateOrder);
-router.delete('/:id', deleteOrder);
+
+//  GET all orders
+router.get('/', OrderController.getAll);
+
+//  GET one order
+router.get('/:id', OrderController.getOne);
+
+//  CREATE order
+router.post('/', OrderController.add);
+
+//  UPDATE order
+router.put('/:id', OrderController.update);
+
+//  DELETE order
+router.delete('/:id', OrderController.delete);
 
 export { router as orderRouter };

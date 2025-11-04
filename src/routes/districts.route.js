@@ -1,23 +1,45 @@
 import { Router } from 'express';
-import {
-  getDistricts,
-  getOneDistrict,
-  updateDistrict,
-  deleteDistrict,
-  addDistrict,
-} from '../controller/districts.controller.js';
+import { DistrictController } from '../controller/districts.controller.js';
 import { authGuard, roleGuard } from '../middleware/guard.middleware.js';
+
 const router = Router();
 
+//  Barcha endpointlar uchun authGuard
 router.use(authGuard);
-router.get('/', roleGuard('amdin, deliveryStaff, customer'), getDistricts);
-router.get('/:id', roleGuard('amdin, deliveryStaff, customer'), getOneDistrict);
-router.post('/', roleGuard('amdin, deliveryStaff, customer'), addDistrict);
-router.put('/:id', roleGuard('amdin, deliveryStaff, customer'), updateDistrict);
+
+//  GET all districts
+router.get(
+  '/',
+  roleGuard('admin', 'deliveryStaff', 'customer'),
+  DistrictController.getAll,
+);
+
+//  GET one district
+router.get(
+  '/:id',
+  roleGuard('admin', 'deliveryStaff', 'customer'),
+  DistrictController.getOne,
+);
+
+//  CREATE district
+router.post(
+  '/',
+  roleGuard('admin', 'deliveryStaff', 'customer'),
+  DistrictController.add,
+);
+
+//  UPDATE district
+router.put(
+  '/:id',
+  roleGuard('admin', 'deliveryStaff', 'customer'),
+  DistrictController.update,
+);
+
+//  DELETE district
 router.delete(
   '/:id',
-  roleGuard('amdin, deliveryStaff, customer'),
-  deleteDistrict,
+  roleGuard('admin', 'deliveryStaff', 'customer'),
+  DistrictController.delete,
 );
 
 export { router as districtRouter };

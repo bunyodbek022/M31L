@@ -1,129 +1,158 @@
 import Delivery_staff from '../model/delivery_staffModel.js';
 import User from '../model/users.model.js';
-//GET ALL
-export const getDelivery_staffs = async (req, res, next) => {
-  try {
-    const staffs = await Delivery_staff.find().populate('district_id');
-    res.status(200).json({
-      status: true,
-      count: staffs.length,
-      data: staffs,
-    });
-  } catch (err) {
-    next(err);
-  }
-};
+import { searchAndPaginate } from '../helper/searchAndPaginate.js';
 
-// GET ONE
-export const getOneDelivery_staff = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const staff = await Delivery_staff.findById(id).populate('district_id');
+export const DeliveryStaffController = {
+  // Barcha delivery stafflarni olish (search + paginate + populate)
+  async getAll(req, res, next) {
+    try {
+      const { limit, page, search } = req.query;
+      const lim = limit ? parseInt(limit, 10) : 10;
+      const pa = page ? parseInt(page, 10) : 1;
+      const off = (pa - 1) * lim;
 
-    if (!staff) {
-      return res
-        .status(404)
-        .json({ status: false, message: 'Delivery staff not found' });
-    }
+      const { results, total } = await searchAndPaginate(
+        search,
+        Delivery_staff,
+        lim,
+        off,
+        [{ path: 'district_id' }],
+      );
 
-    res.status(200).json({
-      status: true,
-      data: staff,
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
-// CREATE STAFF
-export const addDelivery_staff = async (req, res, next) => {
-  try {
-    const { user_id, vehicle_number, district_id } = req.body;
-
-    const userCheck = await User.findById(user_id);
-    if (!userCheck) {
-      return res.status(404).json({
-        status: false,
-        message: 'User not found',
+      res.status(200).json({
+        success: true,
+        message: 'Delivery stafflar muvaffaqiyatli olindi',
+        total,
+        page: pa,
+        limit: lim,
+        count: results.length,
+        data: results,
       });
+    } catch (err) {
+      next(err);
     }
-    const existingStaff = await Delivery_staff.findOne({
-      phone: userCheck.phone,
-    });
-    if (existingStaff) {
-      return res.status(400).json({
-        status: false,
-        message: 'This user is already registered as delivery staff',
+  },
+
+  //  Bitta delivery staffni olish
+  async getOne(req, res, next) {
+    try {
+      const { id } = req.params;
+      const staff = await Delivery_staff.findById(id).populate('district_id');
+
+      if (!staff) {
+        return res.status(404).json({
+          success: false,
+          message: 'Delivery staff topilmadi',
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Delivery staff topildi',
+        data: staff,
       });
+    } catch (err) {
+      next(err);
     }
+  },
 
-    const delivery_staff = await Delivery_staff.create({
-      user_id,
-      vehicle_number,
-      district_id,
-    });
-    await User.updateOne(
-      { _id: user_id },
-      { $set: { role: 'delivery_staff' } },
-    );
+  // Delivery staff qo‘shish
+  async add(req, res, next) {
+    try {
+      const { user_id, vehicle_number, district_id } = req.body;
 
-    res.status(201).json({
-      status: true,
-      message: 'Delivery staff added successfully',
-      data: delivery_staff,
-    });
-  } catch (err) {
-    console.error(err);
-    next(err);
-  }
-};
+      const userCheck = await User.findById(user_id);
+      if (!userCheck) {
+        return res.status(404).json({
+          success: false,
+          message: 'User topilmadi',
+        });
+      }
 
-// UPDATE STAFF
-export const updateDelivery_staff = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const updatedData = req.body;
-
-    const updatedStaff = await Delivery_staff.findByIdAndUpdate(
-      id,
-      updatedData,
-      { new: true, runValidators: true },
-    );
-
-    if (!updatedStaff) {
-      return res.status(404).send('Delivery staff is not found!');
-    }
-
-    res.status(200).json({
-      message: 'Delivery staff updated successfully!',
-      data: updatedStaff,
-    });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
-
-// DELETE
-export const deleteDelivery_staff = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-
-    const staff = await Delivery_staff.findByIdAndDelete(id);
-    if (!staff) {
-      return res.status(404).json({
-        status: false,
-        message: 'Delivery staff not found',
+      const existingStaff = await Delivery_staff.findOne({
+        phone: userCheck.phone,
       });
+      if (existingStaff) {
+        return res.status(400).json({
+          success: false,
+          message:
+            'Bu user allaqachon delivery staff sifatida ro‘yxatdan o‘tgan',
+        });
+      }
+
+      const delivery_staff = await Delivery_staff.create({
+        user_id,
+        vehicle_number,
+        district_id,
+      });
+
+      await User.updateOne(
+        { _id: user_id },
+        { $set: { role: 'delivery_staff' } },
+      );
+
+      res.status(201).json({
+        success: true,
+        message: 'Delivery staff muvaffaqiyatli qo‘shildi',
+        data: delivery_staff,
+      });
+    } catch (err) {
+      next(err);
     }
+  },
 
-    await User.updateOne({ _id: staff.user_id }, { $set: { role: 'user' } });
+  //  Delivery staffni yangilash
+  async update(req, res, next) {
+    try {
+      const { id } = req.params;
+      const updatedData = req.body;
 
-    res.status(200).json({
-      status: true,
-      message: 'Delivery staff deleted successfully',
-    });
-  } catch (err) {
-    next(err);
-  }
+      const updatedStaff = await Delivery_staff.findByIdAndUpdate(
+        id,
+        updatedData,
+        { new: true, runValidators: true },
+      );
+
+      if (!updatedStaff) {
+        return res.status(404).json({
+          success: false,
+          message: 'Delivery staff topilmadi',
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Delivery staff muvaffaqiyatli yangilandi',
+        data: updatedStaff,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  //  Delivery staffni o‘chirish
+  async delete(req, res, next) {
+    try {
+      const { id } = req.params;
+      const staff = await Delivery_staff.findByIdAndDelete(id);
+
+      if (!staff) {
+        return res.status(404).json({
+          success: false,
+          message: 'Delivery staff topilmadi',
+        });
+      }
+
+      // User rolini tiklash
+      await User.updateOne({ _id: staff.user_id }, { $set: { role: 'user' } });
+
+      res.status(200).json({
+        success: true,
+        message: "Delivery staff muvaffaqiyatli o'chirildi",
+        data: staff,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
 };

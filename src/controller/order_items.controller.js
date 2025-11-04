@@ -1,68 +1,126 @@
 import Order_item from '../model/order_itemsModel.js';
-export const getOrder_items = async (req, res, next) => {
-  try {
-    const order_item = await Order_item.find();
-    res.send({ message: order_item });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
-export const getOneOrder_item = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const order_item = await Order_item.find({ id });
-    res.send({ message: order_item });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
+import { searchAndPaginate } from '../helper/searchAndPaginate.js';
 
-export const addOrder_item = async (req, res, next) => {
-  try {
-    const order_item = await Order_item.create(req.body);
-    res.send({ message: order_item });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
-export const updateOrder_item = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const updatedData = req.body;
+export const OrderItemController = {
+  //  Barcha order itemlarni olish (search + paginate + populate)
+  async getAll(req, res, next) {
+    try {
+      const { limit, page, search } = req.query;
+      const lim = limit ? parseInt(limit, 10) : 10;
+      const pa = page ? parseInt(page, 10) : 1;
+      const off = (pa - 1) * lim;
 
-    const updatedOrderItem = await Order_item.findByIdAndUpdate(
-      id,
-      updatedData,
-      { new: true, runValidators: true },
-    );
+      const { results, total } = await searchAndPaginate(
+        search,
+        Order_item,
+        lim,
+        off,
+        [{ path: 'order_id' }, { path: 'product_id' }],
+      );
 
-    if (!updatedOrderItem) {
-      return res.status(404).send('Order_item not found!');
+      res.status(200).json({
+        success: true,
+        message: 'Order itemlar muvaffaqiyatli olindi',
+        total,
+        page: pa,
+        limit: lim,
+        count: results.length,
+        data: results,
+      });
+    } catch (err) {
+      next(err);
     }
+  },
 
-    res.status(200).json({
-      message: 'Order_item updated successfully!',
-      data: updatedOrderItem,
-    });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
+  //  Bitta order itemni olish
+  async getOne(req, res, next) {
+    try {
+      const { id } = req.params;
+      const order_item = await Order_item.findById(id)
+        .populate('order_id')
+        .populate('product_id');
 
-export const deleteOrder_item = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const order_item = await Order_item.deleteOne(id);
-    if (order_item.deletedCount === 0) {
-      return res.status(404).json({ message: 'Order_item is not found' });
+      if (!order_item) {
+        return res.status(404).json({
+          success: false,
+          message: 'Order item topilmadi',
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Order item topildi',
+        data: order_item,
+      });
+    } catch (err) {
+      next(err);
     }
-    res.send({ message: order_item });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
+  },
+
+  // ➕ Order item qo‘shish
+  async add(req, res, next) {
+    try {
+      const order_item = await Order_item.create(req.body);
+
+      res.status(201).json({
+        success: true,
+        message: 'Order item muvaffaqiyatli qo‘shildi',
+        data: order_item,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  //  Order itemni yangilash
+  async update(req, res, next) {
+    try {
+      const { id } = req.params;
+      const updatedData = req.body;
+
+      const updatedOrderItem = await Order_item.findByIdAndUpdate(
+        id,
+        updatedData,
+        { new: true, runValidators: true },
+      );
+
+      if (!updatedOrderItem) {
+        return res.status(404).json({
+          success: false,
+          message: 'Order item topilmadi',
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Order item muvaffaqiyatli yangilandi',
+        data: updatedOrderItem,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  //  Order itemni o‘chirish
+  async delete(req, res, next) {
+    try {
+      const { id } = req.params;
+      const order_item = await Order_item.findByIdAndDelete(id);
+
+      if (!order_item) {
+        return res.status(404).json({
+          success: false,
+          message: 'Order item topilmadi',
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Order item muvaffaqiyatli o'chirildi",
+        data: order_item,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
 };
