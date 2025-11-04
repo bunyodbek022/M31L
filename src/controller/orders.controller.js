@@ -1,67 +1,125 @@
 import Order from '../model/ordersModel.js';
-export const getOrders = async (req, res, next) => {
-  try {
-    const order = await Order.find();
-    res.send({ message: order });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
-export const getOneOrder = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const order = await Order.find({ id });
-    res.send({ message: order });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
+import { searchAndPaginate } from '../helper/searchAndPaginate.js';
 
-export const addOrder = async (req, res, next) => {
-  try {
-    const order = await Order.create(req.body);
-    res.send({ message: order });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
-export const updateOrder = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const updatedData = req.body;
+export const OrderController = {
+  //  Barcha orderlarni olish (search + paginate + populate)
+  async getAll(req, res, next) {
+    try {
+      const { limit, page, search } = req.query;
+      const lim = limit ? parseInt(limit, 10) : 10;
+      const pa = page ? parseInt(page, 10) : 1;
+      const off = (pa - 1) * lim;
 
-    const updatedOrder = await Order.findByIdAndUpdate(id, updatedData, {
-      new: true,
-      runValidators: true,
-    });
+      const { results, total } = await searchAndPaginate(
+        search,
+        Order,
+        lim,
+        off,
+        [{ path: 'customer_id' }, { path: 'delivery_staff_id' }],
+      );
 
-    if (!updatedOrder) {
-      return res.status(404).json({ message: 'Order not found!' });
+      res.status(200).json({
+        success: true,
+        message: 'Orderlar muvaffaqiyatli olindi',
+        total,
+        page: pa,
+        limit: lim,
+        count: results.length,
+        data: results,
+      });
+    } catch (err) {
+      next(err);
     }
+  },
 
-    res.status(200).json({
-      message: 'Order updated successfully!',
-      data: updatedOrder,
-    });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
+  //  Bitta orderni olish
+  async getOne(req, res, next) {
+    try {
+      const { id } = req.params;
+      const order = await Order.findById(id)
+        .populate('customer_id')
+        .populate('delivery_staff_id');
 
-export const deleteOrder = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const order = await Order.deleteOne(id);
-    if (order.deletedCount === 0) {
-      return res.status(404).json({ message: 'Order is not found' });
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: 'Order topilmadi',
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Order topildi',
+        data: order,
+      });
+    } catch (err) {
+      next(err);
     }
-    res.send({ message: order });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
+  },
+
+  //  Order qo‘shish
+  async add(req, res, next) {
+    try {
+      const order = await Order.create(req.body);
+
+      res.status(201).json({
+        success: true,
+        message: 'Order muvaffaqiyatli qo‘shildi',
+        data: order,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  //  Orderni yangilash
+  async update(req, res, next) {
+    try {
+      const { id } = req.params;
+      const updatedData = req.body;
+
+      const updatedOrder = await Order.findByIdAndUpdate(id, updatedData, {
+        new: true,
+        runValidators: true,
+      });
+
+      if (!updatedOrder) {
+        return res.status(404).json({
+          success: false,
+          message: 'Order topilmadi',
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Order muvaffaqiyatli yangilandi',
+        data: updatedOrder,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  //  Orderni o‘chirish
+  async delete(req, res, next) {
+    try {
+      const { id } = req.params;
+      const order = await Order.findByIdAndDelete(id);
+
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: 'Order topilmadi',
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Order muvaffaqiyatli o'chirildi",
+        data: order,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
 };

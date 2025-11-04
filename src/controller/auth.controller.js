@@ -6,12 +6,13 @@ import {
   generateRefreshToken,
 } from '../helper/jwt.js';
 import { ApiError } from '../middleware/apiError.js';
-import * as bcrypt from 'bcrypt';
 
 export const authController = {
-  signup: async (req, res, next) => {
+  // Ro‘yxatdan o‘tish
+  async signup(req, res, next) {
     try {
       const { name, phone, password, email, role } = req.body;
+
       const userExist = await User.findOne({ email: email.toLowerCase() });
       if (userExist) {
         return next(new ApiError(403, "Email oldin ro'yxatdan o'tgan"));
@@ -31,20 +32,28 @@ export const authController = {
       res.status(201).json({
         success: true,
         message: "Muvaffaqiyatli ro'yxatdan o'tdingiz",
-        accessToken,
-        refreshToken,
+        data: {
+          user: {
+            id: newUser._id,
+            name: newUser.name,
+            email: newUser.email,
+            role: newUser.role,
+          },
+          accessToken,
+          refreshToken,
+        },
       });
     } catch (error) {
       next(error);
     }
   },
 
-  signin: async (req, res, next) => {
+  // Tizimga kirish
+  async signin(req, res, next) {
     try {
       const { email, password } = req.body;
-      console.log(req.body);
+
       const userData = await User.findOne({ email: email.toLowerCase() });
-      console.log(userData);
       if (!userData) return next(new ApiError(404, 'User topilmadi'));
 
       const isValidPassword = await userData.comparePassword(password);
@@ -56,30 +65,43 @@ export const authController = {
 
       res.status(200).json({
         success: true,
-        accessToken,
-        refreshToken,
+        message: 'Kirish muvaffaqiyatli amalga oshirildi',
+        data: {
+          user: {
+            id: userData._id,
+            name: userData.name,
+            email: userData.email,
+            role: userData.role,
+          },
+          accessToken,
+          refreshToken,
+        },
       });
     } catch (error) {
       next(error);
     }
   },
 
-  profile: async (req, res, next) => {
+  //  Profilni olish
+  async profile(req, res, next) {
     try {
       const user = await User.findById(req.user).select('-password');
       if (!user) return next(new ApiError(404, 'User topilmadi'));
 
-      res.json(user);
+      res.status(200).json({
+        success: true,
+        message: 'Foydalanuvchi profili',
+        data: user,
+      });
     } catch (error) {
       next(error);
     }
   },
 
-  // REFRESH
-  updateAccess: async (req, res, next) => {
+  //  Refresh token orqali yangilash
+  async updateAccess(req, res, next) {
     try {
       const authHeader = req.headers.authorization;
-
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return next(new ApiError(401, "Refresh token yo'q"));
       }
@@ -94,9 +116,11 @@ export const authController = {
       if (!user) return next(new ApiError(404, 'User topilmadi'));
 
       const accessToken = generateAccessToken(user);
+
       res.status(200).json({
         success: true,
-        accessToken,
+        message: 'Access token yangilandi',
+        data: { accessToken },
       });
     } catch (error) {
       next(new ApiError(401, 'Yaroqsiz yoki muddati tugagan refresh token'));
