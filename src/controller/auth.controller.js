@@ -6,6 +6,7 @@ import {
   generateRefreshToken,
 } from '../helper/jwt.js';
 import { ApiError } from '../middleware/apiError.js';
+import { sendVerificationCode } from '../../services/email.service.js';
 
 export const authController = {
   // Ro‘yxatdan o‘tish
@@ -18,36 +19,60 @@ export const authController = {
         return next(new ApiError(403, "Email oldin ro'yxatdan o'tgan"));
       }
 
+      const code = Math.floor(100000 + Math.random() * 900000);
+
       const newUser = await User.create({
         name,
         phone,
         email: email.toLowerCase(),
         password,
         role,
+        isActive: false,
+        verifyCode: code,
       });
 
-      const accessToken = generateAccessToken(newUser);
-      const refreshToken = generateRefreshToken(newUser);
-
+      await sendVerificationCode(email, code);
       res.status(201).json({
         success: true,
-        message: "Muvaffaqiyatli ro'yxatdan o'tdingiz",
+        message: 'Varify code emailingizga yuborildi',
         data: {
           user: {
             id: newUser._id,
             name: newUser.name,
             email: newUser.email,
             role: newUser.role,
+            isActive: newUser.isActive,
           },
-          accessToken,
-          refreshToken,
         },
       });
     } catch (error) {
       next(error);
     }
   },
-
+  // User activete
+  async verifyEmail(req, res, next) {
+    try {
+      const { email, code } = req.body;
+      const user = await User.findOne({ email }).select('+verifyCode');
+      if (!user) return res.status(404).json({ message: 'User topilmadi' });
+      if (user.isActive)
+        return res
+          .status(400)
+          .json({ message: 'User allaqachon faollashtirilgan' });
+      if (user.verifyCode !== code) {
+        console.log(user.verifyCode);
+        return res.status(400).json({ message: "Noto'gri kod" });
+      }
+      user.isActive = true;
+      user.verifyCode = null;
+      await user.save();
+      res
+        .status(200)
+        .json({ success: true, message: 'Email muvaffaqiyatli tasdiqlandi' });
+    } catch (error) {
+      next(error);
+    }
+  },
   // Tizimga kirish
   async signin(req, res, next) {
     try {
@@ -88,10 +113,11 @@ export const authController = {
       const user = await User.findById(req.user).select('-password');
       if (!user) return next(new ApiError(404, 'User topilmadi'));
 
+      const { password, verifyCode, ...safeUser } = user.toObject();
       res.status(200).json({
         success: true,
         message: 'Foydalanuvchi profili',
-        data: user,
+        data: safeUser,
       });
     } catch (error) {
       next(error);

@@ -49,7 +49,7 @@ export const roleGuard = (...role) => {
     console.log({ user: req.user });
     console.log({ userRoles });
     console.log({ role });
-
+    if (userRoles.includes('admin')) return next();
     const hasAccess = userRoles.some((r) => role.includes(r));
     if (!hasAccess) {
       return next(

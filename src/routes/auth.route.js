@@ -9,6 +9,7 @@ import { validate } from '../validation/validation.js';
 import {
   customerValidate,
   loginValidate,
+  verifyValidate,
 } from '../validation/user.validation.js';
 
 const router = Router();
@@ -19,6 +20,12 @@ router.get(
   authGuard,
   roleGuard('admin', 'deliveryStaff', 'customer'),
   authController.profile,
+);
+// verify User (verify)
+router.post(
+  '/verify',
+  validate(verifyValidate, 'body'),
+  authController.verifyEmail,
 );
 
 //  Sign in (login)

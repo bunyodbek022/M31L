@@ -5,6 +5,7 @@ import {
   adminUpdateUserValidate,
 } from '../validation/user.validation.js';
 import { ApiError } from '../middleware/apiError.js';
+import { generateAccessToken, generateRefreshToken } from '../helper/jwt.js';
 
 export const UserController = {
   //  Barcha foydalanuvchilarni olish (search + paginate)
@@ -59,6 +60,47 @@ export const UserController = {
     }
   },
 
+  // Foydalanuvchi qoshish
+  async add(req, res, next) {
+    try {
+      const { name, phone, password, email, role, isActive } = req.body;
+
+      const userExist = await User.findOne({ email: email.toLowerCase() });
+      if (userExist) {
+        return next(new ApiError(403, "Email oldin ro'yxatdan o'tgan"));
+      }
+
+      const newUser = await User.create({
+        name,
+        phone,
+        email: email.toLowerCase(),
+        password,
+        role,
+        isActive,
+      });
+
+      const accessToken = generateAccessToken(newUser);
+      const refreshToken = generateRefreshToken(newUser);
+
+      res.status(201).json({
+        success: true,
+        message: "Muvaffaqiyatli ro'yxatdan o'tdi",
+        data: {
+          user: {
+            id: newUser._id,
+            name: newUser.name,
+            email: newUser.email,
+            role: newUser.role,
+            isActive: newUser.isActive,
+          },
+          accessToken,
+          refreshToken,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
   //  Foydalanuvchini yangilash
   async update(req, res, next) {
     try {
