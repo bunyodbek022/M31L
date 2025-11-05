@@ -10,6 +10,11 @@ const userSchema = new mongoose.Schema({
     enum: ['customer', 'deliveryStaff', 'admin'],
     default: 'customer',
   },
+  isActive: { type: Boolean, default: false },
+  verifyCode: {
+    type: String,
+    select: false,
+  },
 });
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();

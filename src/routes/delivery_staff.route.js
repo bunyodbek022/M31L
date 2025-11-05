@@ -21,6 +21,9 @@ router.get(
   DeliveryStaffController.getOne,
 );
 
+// ADD delivery staff
+router.post('/', roleGuard('admin'), DeliveryStaffController.add);
+
 //  UPDATE delivery staff
 router.put(
   '/:id',

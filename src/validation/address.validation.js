@@ -7,7 +7,6 @@ export const addressValidate = z
       .max(50, 'Name too long')
       .trim()
       .regex(/^[a-zA-Z\s]+$/, 'Name must contain only letters and spaces'),
-    customer_id: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid Customer ID'),
     district_id: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid District ID'),
     address: z
       .string()

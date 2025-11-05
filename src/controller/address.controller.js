@@ -63,10 +63,13 @@ export const AddressController = {
   // Address qo‘shish
   async add(req, res, next) {
     try {
-      const address = await Address.create(req.body);
+      console.log('salom');
+      const customer_id = req.user;
+      console.log(req.user);
+      const address = await Address.create({ ...req.body, customer_id });
       res.status(201).json({
         success: true,
-        message: 'Address muvaffaqiyatli qo‘shildi',
+        message: 'Address muvaffaqiyatli qoshildi',
         data: address,
       });
     } catch (err) {

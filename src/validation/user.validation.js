@@ -24,6 +24,10 @@ export const customerValidate = z.object({
   phone: z.string().regex(/^\+\d{10,15}$/, 'Invalid phone number'),
 });
 
+export const verifyValidate = z.object({
+  email: z.string().email("Email noto'g'ri kiritilgan"),
+  code: z.string().length(6, "Kod 6 ta belgidan iborat bo'lishi kerak"),
+});
 export const customerUpdate = z.object({
   name: z
     .string()
