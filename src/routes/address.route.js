@@ -25,7 +25,6 @@ router.get(
 router.post(
   '/',
   authGuard,
-  selfGuard,
   validate(addressValidate, 'body'),
   AddressController.add,
 );

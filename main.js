@@ -4,13 +4,15 @@ import { connectDB } from './src/db/db.js';
 import { mainRouter } from './src/routes/index.js';
 import { errorHandler } from './src/middleware/errorHandler.js';
 import logger from './src/utils/logger.js';
+import cookieParser from 'cookie-parser';
 const app = express();
 app.use(express.json());
 await connectDB();
+app.use(cookieParser());
 app.use(
   morgan('tiny', {
     stream: {
-      write: (message) => logger.http(message.trim()),
+      write: (message) => logger.info(message.trim()),
     },
   }),
 );

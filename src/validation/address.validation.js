@@ -12,7 +12,8 @@ export const addressValidate = z
       .string()
       .min(2, 'Address too short')
       .max(80, 'Address too long')
-      .trim(),
+      .trim()
+      .optional(),
     location: z
       .string()
       .min(2, 'Location too short')

@@ -22,24 +22,12 @@ router.get(
 );
 
 //  CREATE district
-router.post(
-  '/',
-  roleGuard('admin', 'deliveryStaff', 'customer'),
-  DistrictController.add,
-);
+router.post('/', roleGuard('admin'), DistrictController.add);
 
 //  UPDATE district
-router.put(
-  '/:id',
-  roleGuard('admin', 'deliveryStaff', 'customer'),
-  DistrictController.update,
-);
+router.put('/:id', roleGuard('admin'), DistrictController.update);
 
 //  DELETE district
-router.delete(
-  '/:id',
-  roleGuard('admin', 'deliveryStaff', 'customer'),
-  DistrictController.delete,
-);
+router.delete('/:id', roleGuard('admin'), DistrictController.delete);
 
 export { router as districtRouter };
