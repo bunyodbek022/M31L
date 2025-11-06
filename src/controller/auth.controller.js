@@ -6,7 +6,7 @@ import {
   generateRefreshToken,
 } from '../helper/jwt.js';
 import { ApiError } from '../middleware/apiError.js';
-import { sendVerificationCode } from '../../services/email.service.js';
+import { sendVerificationCode } from '../services/email.service.js';
 
 export const authController = {
   // Ro‘yxatdan o‘tish
@@ -54,14 +54,12 @@ export const authController = {
     try {
       const { email, code } = req.body;
       const user = await User.findOne({ email }).select('+verifyCode');
-      if (!user) return res.status(404).json({ message: 'User topilmadi' });
+      if (!user) return next(new ApiError(404, 'User topilmadi'));
       if (user.isActive)
-        return res
-          .status(400)
-          .json({ message: 'User allaqachon faollashtirilgan' });
+        return next(new ApiError(400, 'User allaqachon faollashtirilgan'));
       if (user.verifyCode !== code) {
         console.log(user.verifyCode);
-        return res.status(400).json({ message: "Noto'gri kod" });
+        return next(new ApiError(400, "Noto'gri kod"));
       }
       user.isActive = true;
       user.verifyCode = null;
@@ -88,6 +86,13 @@ export const authController = {
       const accessToken = generateAccessToken(userData);
       const refreshToken = generateRefreshToken(userData);
 
+      res.cookie('accessToken', accessToken, {
+        maxAge: 60 * 60 * 1000,
+      });
+
+      res.cookie('refreshToken', refreshToken, {
+        maxAge: 60 * 60 * 24 * 7 * 1000,
+      });
       res.status(200).json({
         success: true,
         message: 'Kirish muvaffaqiyatli amalga oshirildi',
@@ -98,8 +103,6 @@ export const authController = {
             email: userData.email,
             role: userData.role,
           },
-          accessToken,
-          refreshToken,
         },
       });
     } catch (error) {
@@ -127,12 +130,12 @@ export const authController = {
   //  Refresh token orqali yangilash
   async updateAccess(req, res, next) {
     try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      const refreshToken = req.cookies?.refreshToken;
+      console.log(refreshToken);
+      if (!refreshToken) {
         return next(new ApiError(401, "Refresh token yo'q"));
       }
 
-      const refreshToken = authHeader.split(' ')[1];
       const decoded = await verifyToken(
         refreshToken,
         process.env.JWT_REFRESH_SECRET,
@@ -142,7 +145,9 @@ export const authController = {
       if (!user) return next(new ApiError(404, 'User topilmadi'));
 
       const accessToken = generateAccessToken(user);
-
+      res.cookie('accessToken', accessToken, {
+        maxAge: 60 * 60 * 1000,
+      });
       res.status(200).json({
         success: true,
         message: 'Access token yangilandi',

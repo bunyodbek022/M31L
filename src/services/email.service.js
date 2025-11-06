@@ -39,7 +39,7 @@ export const sendVerificationCode = async (email, code) => {
           </div>
           <p style="color: #777;">
             Kod <b>5 daqiqa</b> davomida amal qiladi.<br>
-            Agar siz bu so‘rovni yubormagan bo‘lsangiz, bu xatni e’tiborsiz qoldiring.
+            Agar siz bu so'rovni yubormagan bo'lsangiz, bu xatni e'tiborsiz qoldiring.
           </p>
           <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
           <p style="font-size: 13px; color: #999;">

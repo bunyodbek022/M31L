@@ -1,7 +1,7 @@
 import Delivery_staff from '../model/delivery_staffModel.js';
 import User from '../model/users.model.js';
 import { searchAndPaginate } from '../helper/searchAndPaginate.js';
-
+import { ApiError } from '../middleware/apiError.js';
 export const DeliveryStaffController = {
   // Barcha delivery stafflarni olish (search + paginate + populate)
   async getAll(req, res, next) {
@@ -40,10 +40,7 @@ export const DeliveryStaffController = {
       const staff = await Delivery_staff.findById(id).populate('district_id');
 
       if (!staff) {
-        return res.status(404).json({
-          success: false,
-          message: 'Delivery staff topilmadi',
-        });
+        return next(new ApiError(404, 'Delivery Staff topilmadi'));
       }
 
       res.status(200).json({
@@ -63,21 +60,19 @@ export const DeliveryStaffController = {
 
       const userCheck = await User.findById(user_id);
       if (!userCheck) {
-        return res.status(404).json({
-          success: false,
-          message: 'User topilmadi',
-        });
+        return next(new ApiError(404, 'User topilmadi'));
       }
 
       const existingStaff = await Delivery_staff.findOne({
         phone: userCheck.phone,
       });
       if (existingStaff) {
-        return res.status(400).json({
-          success: false,
-          message:
-            'Bu user allaqachon delivery staff sifatida ro‘yxatdan o‘tgan',
-        });
+        return next(
+          new ApiError(
+            400,
+            "Bu user allaqachon delivery staff sifatida ro'yxatdan o'tgan",
+          ),
+        );
       }
 
       const delivery_staff = await Delivery_staff.create({
@@ -93,7 +88,7 @@ export const DeliveryStaffController = {
 
       res.status(201).json({
         success: true,
-        message: 'Delivery staff muvaffaqiyatli qo‘shildi',
+        message: "Delivery staff muvaffaqiyatli qo'shildi",
         data: delivery_staff,
       });
     } catch (err) {
@@ -114,10 +109,7 @@ export const DeliveryStaffController = {
       );
 
       if (!updatedStaff) {
-        return res.status(404).json({
-          success: false,
-          message: 'Delivery staff topilmadi',
-        });
+        return next(new ApiError(404, 'Delivery Staff topilmadi'));
       }
 
       res.status(200).json({

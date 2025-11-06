@@ -1,6 +1,6 @@
 import Address from '../model/addressModel.js';
 import { searchAndPaginate } from '../helper/searchAndPaginate.js';
-
+import { ApiError } from '../middleware/apiError.js';
 export const AddressController = {
   // Hammasini olish (search, paginate, populate bilan)
   async getAll(req, res, next) {
@@ -44,10 +44,7 @@ export const AddressController = {
         .populate('district_id', 'name');
 
       if (!address) {
-        return res.status(404).json({
-          success: false,
-          message: 'Address topilmadi!',
-        });
+        return next(new ApiError(404, 'Address topilmadi'));
       }
 
       res.status(200).json({
@@ -63,9 +60,8 @@ export const AddressController = {
   // Address qo‘shish
   async add(req, res, next) {
     try {
-      console.log('salom');
-      const customer_id = req.user;
-      console.log(req.user);
+      const customer_id = req.user.id;
+      console.log(req.user.id);
       const address = await Address.create({ ...req.body, customer_id });
       res.status(201).json({
         success: true,
@@ -88,10 +84,7 @@ export const AddressController = {
       });
 
       if (!address) {
-        return res.status(404).json({
-          success: false,
-          message: 'Address topilmadi!',
-        });
+        return next(new ApiError(400, 'Address topilmadi'));
       }
 
       res.status(200).json({
@@ -111,15 +104,12 @@ export const AddressController = {
       const address = await Address.findByIdAndDelete(id);
 
       if (!address) {
-        return res.status(404).json({
-          success: false,
-          message: 'Address topilmadi!',
-        });
+        return next(new ApiError(400, 'Address topilmadi'));
       }
 
       res.status(200).json({
         success: true,
-        message: 'Address o‘chirildi',
+        message: "Address o'chirildi",
         data: address,
       });
     } catch (err) {

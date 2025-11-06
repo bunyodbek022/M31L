@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 
-import logger from '../utils/logger';
+import logger from '../utils/logger.js';
 export const errorHandler = (err, req, res, next) => {
   console.error('Error:', err.stack || err.message);
   const statusCode = err.statusCode || 500;

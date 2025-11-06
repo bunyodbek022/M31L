@@ -3,20 +3,17 @@ import { config } from '../config/index.js';
 import { verifyToken } from '../helper/jwt.js';
 import User from '../model/users.model.js';
 import { ApiError } from './apiError.js';
-
 // AUTH GUARD
 export const authGuard = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const token = req.cookies?.accessToken;
+    if (!token) {
       return next(new ApiError(401, 'Token mavjud emas'));
     }
 
-    const token = authHeader.split(' ')[1];
-
     const verified = await verifyToken(token, config.jwt.accessSecret);
     const user = await User.findById(verified.id);
+    console.log(user);
     req.user = user;
     next();
   } catch (error) {
@@ -25,12 +22,10 @@ export const authGuard = async (req, res, next) => {
 };
 export const refreshGuard = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const token = req.cookies?.refreshToken;
+    if (!token) {
       return next(new ApiError(401, 'Refresh token mavjud emas'));
     }
-
-    const token = authHeader.split(' ')[1];
     const decoded = await verifyToken(token, process.env.JWT_REFRESH_SECRET);
     req.user = decoded;
     next();
